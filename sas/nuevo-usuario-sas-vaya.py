@@ -44,6 +44,8 @@ def crear_usuario_local(gid, uid, username):
     subprocess.check_call(cmds)
     print("\33[0;32m [OK] \33[0m")
 
+def comprobar_token() -> bool:
+    pass
 
 def main():
     opt = get_options()
