@@ -1,58 +1,58 @@
 #!/usr/bin/env python3
 
-import subprocess
-from pathlib import Path
 import argparse
 
-PASSWD: str = Path("/etc/passwd")
-DEFAULT_GROUP: int = 1004
+import settings
+import locallib
+import saslib
 
 
-def get_options() -> argparse.Namespace:
+def get_options() -> {}:
     parser = argparse.ArgumentParser(prog="alta-usuario-sas-viya")
-    parser.add_argument('username')
-    return parser.parse_args()
+    parser.add_argument('username', help_text="El login del usuario a incoporar")
+    parser.add_argument('group', help_text='El nombre del grupo al que pertence')
+    parser.add_argument('-v', '--verbose', action='store_false')
+    opts = parser.parse_args()
+    if opts.verbose:
+        settings.is_tron(True)
+    gid = locallib.get_gid(opts.group)
+    if not gid:
+        raise ValueError(
+            f'El nombre de grupo indicado: [{opts.group}]'
+            ' no existe.'
+            )
+    uid = locallib.get_uid(opts.username)
+    if uid:
+        raise ValueError(
+            f'El usuario indicado: [{opts.username}] ya existe.'
+            )
+    return {
+        'username': opts.username,
+        'uid': uid,
+        'group': opts.group,
+        'gid': gid,
+        'verbose': opts.verbose,
+        }
 
-
-def leer_ultimas_ids() -> tuple[int, int]:
-    ids = []
-    with open(PASSWD, 'r') as file_input:
-        for line in file_input:
-             username, _pwd, uid, gid, *rest = line.split(':')
-             if username == 'nobody':
-                 continue
-             ids.append((int(uid), int(gid)))
-    return max(ids)
-
-
-def crear_usuario_local(gid, uid, username):
-    print(f"Creamos el usuario {username}, con uid {uid} y gid {gid}")
-    cmds = [
-        "/usr/sbin/useradd",
-        "-d",
-        f"/home/{username}",
-        "-g",
-        str(gid),
-        "-m",
-        "-s",
-        "/sbin/nologin",
-        "-u",
-        str(uid),
-        username,
-        ]
-    print(*cmds, end="...")
-    subprocess.check_call(cmds)
-    print("\33[0;32m [OK] \33[0m")
-
-def comprobar_token() -> bool:
-    pass
 
 def main():
     opt = get_options()
-    last_uid, _gid = leer_ultimas_ids()
+    username = opt['username']
+    uid = opt['uid']
+    group = opt['group']
+    gid = opt['gid']
+    last_uid = locallib.get_last_user_id()
     next_uid = last_uid + 1
-    print(f"Ultimo id es {last_uid}, el siguiente es {next_uid}")
-    crear_usuario_local(DEFAULT_GROUP, next_uid, opt.username)
+    if settings.is_tron():
+        print(f"Ultimo id es {last_uid}, el siguiente es {next_uid}")
+    locallib.create_local_user(username, next_uid, gid)
+    saslib.init()
+    saslib.sas_update_user(username, next_uid, gid)
+    if settings.is_tron():
+        print(
+            f"Creado el usuario {username} con uid: {uid}"
+            f" en el grupo {group} con gid: {gid}"
+            )
 
 
 if __name__ == '__main__':
