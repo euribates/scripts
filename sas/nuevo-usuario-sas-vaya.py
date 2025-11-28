@@ -9,10 +9,11 @@ import saslib
 
 def get_options() -> {}:
     parser = argparse.ArgumentParser(prog="alta-usuario-sas-viya")
-    parser.add_argument('username', help_text="El login del usuario a incoporar")
-    parser.add_argument('group', help_text='El nombre del grupo al que pertence')
-    parser.add_argument('-v', '--verbose', action='store_false')
+    parser.add_argument('username', help="El login del usuario a incoporar")
+    parser.add_argument('group', help='El nombre del grupo al que pertence')
+    parser.add_argument('-v', '--verbose', action='store_true')
     opts = parser.parse_args()
+    print(opts)
     if opts.verbose:
         settings.is_tron(True)
     gid = locallib.get_gid(opts.group)
@@ -38,15 +39,20 @@ def get_options() -> {}:
 def main():
     opt = get_options()
     username = opt['username']
-    uid = opt['uid']
     group = opt['group']
+    if settings.is_tron():
+        print(
+             f'dando de alta al usuario {username}'
+             f' en el grupo {group}'
+             )
+    uid = opt['uid']
     gid = opt['gid']
     last_uid = locallib.get_last_user_id()
     next_uid = last_uid + 1
     if settings.is_tron():
         print(f"Ultimo id es {last_uid}, el siguiente es {next_uid}")
     locallib.create_local_user(username, next_uid, gid)
-    saslib.init()
+    saslib.sas_init()
     saslib.sas_update_user(username, next_uid, gid)
     if settings.is_tron():
         print(

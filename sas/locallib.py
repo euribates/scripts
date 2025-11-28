@@ -1,4 +1,4 @@
-
+from typing import Optional
 import subprocess
 
 import settings
@@ -8,7 +8,7 @@ TRON = settings.TRON
 OK = "\33[0;32m [OK] \33[0m"
 
 
-def get_uid(name: str) -> int|None:
+def get_uid(name: str) -> Optional[int]:
     '''Obtener el id. del usuario a partir de su nombre.
     '''
     with open(settings.ETC_PASSWD, 'r') as file_input:
@@ -19,7 +19,7 @@ def get_uid(name: str) -> int|None:
     return None
 
 
-def get_gid(name: str) -> int|None:
+def get_gid(name: str) -> Optional[int]:
     '''Obtener el id. del grupo a partir del nombre del grupo.
     '''
     with open(settings.ETC_GROUP, 'r') as file_input:
@@ -53,7 +53,7 @@ def get_last_group_id() -> int:
 def execute(*cmds):
     if TRON:
         print(*cmds, end="...")
-    subprocess.check_call(cmds)
+    # subprocess.check_call(cmds)
     if TRON:
         print(OK)
 

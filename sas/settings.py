@@ -11,6 +11,7 @@ SAS_ENDPOINT = config('SAS_ENDPOINT', default='https://piad-pre.gobiernodecanari
 TRON = config('TRON', default=False, cast=config.boolean)
 
 def is_tron(value=None) -> bool:
+    global TRON
     if value is not None:
         TRON = bool(value)
     return TRON

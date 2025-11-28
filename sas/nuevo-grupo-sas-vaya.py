@@ -10,7 +10,7 @@ import saslib
 
 def get_options() -> {}:
     parser = argparse.ArgumentParser(prog="nuevo-grupo-sas-viya")
-    parser.add_argument('group', help_text='El nombre del grupo que quiere crear')
+    parser.add_argument('group', help='El nombre del grupo que quiere crear')
     parser.add_argument('-v', '--verbose', action='store_false')
     opts = parser.parse_args()
     if opts.verbose:
