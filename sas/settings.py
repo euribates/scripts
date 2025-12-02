@@ -5,8 +5,24 @@ from prettyconf import config
 ETC_PASSWD: Path = Path("/etc/passwd")
 ETC_GROUP: Path = Path("/etc/group")
 
-SAS_CLI = config('SAS_CLI', default='/datos/SAS-VIYA-CLI/sas-viya')
-SAS_ENDPOINT = config('SAS_ENDPOINT', default='https://piad-pre.gobiernodecanarias.net/')
+SAS_CLI = config(
+    'SAS_CLI',
+    default='/datos/SAS-VIYA-CLI/sas-viya',
+    )
+
+SAS_ENDPOINT = config(
+    'SAS_ENDPOINT',
+    default='https://piad-pre.gobiernodecanarias.net/',
+    )
+
+SSL_CERT_FILE = config(
+    'SSL_CERT_FILE',
+    default='/datos/SAS-VIYA-CLI/_.gobiernodecanarias.net.crt',
+    )
+
+ADMIN_USER = config(
+    'ADMIN_USER',
+    )
 
 TRON = config('TRON', default=False, cast=config.boolean)
 

@@ -1,5 +1,6 @@
 from typing import Optional
 import subprocess
+import sys
 
 import settings
 
@@ -53,7 +54,8 @@ def get_last_group_id() -> int:
 def execute(*cmds):
     if TRON:
         print(*cmds, end="...")
-    # subprocess.check_call(cmds)
+        sys.stdout.flush()
+    subprocess.check_call(cmds)
     if TRON:
         print(OK)
 

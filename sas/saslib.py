@@ -1,18 +1,19 @@
 from pathlib import Path
+import os
 import getpass
 from json import load as json_load
 from datetime import datetime as DateTime
 
+import settings
 from locallib import execute
-from settings import SAS_CLI
-from settings import SAS_ENDPOINT
-from settings import is_tron
+
+TRON = settings.is_tron()
 
 
 def sas_needs_profile() -> bool:
     filename = Path('~/.sas/config.json')
     if not filename.exists():
-        if is_tron():
+        if TRON:
             print('Tenemos que actualizar el perfil')
         return True
     return False
@@ -29,7 +30,7 @@ def sas_needs_credentials_update() -> bool:
                     expiry = DateTime.fromisoformat(default['expiry'])
                     return expiry <= DateTime.now()
 
-    if is_tron():
+    if TRON:
         print('Tenemos que realizar el login')
     return True
 
@@ -37,25 +38,33 @@ def sas_needs_credentials_update() -> bool:
 def sas_init_profile():
     """Inicializa el profile del usuario.
     """
-    execute(
-        SAS_CLI,
+    if TRON:
+        print(
+            f"Actualizando el perfil de conexión de usuario."
+            )
+    cmd = [
+        settings.SAS_CLI,
         "profile",
         "init",
         "--colors-enabled",
-        "no",
         "--output",
         "json",
         "--sas-endpoint",
-        SAS_ENDPOINT,
+        settings.SAS_ENDPOINT,
         "--with-defaults",
-        )
+        ]
+    result = execute(*cmd)
+    print(result)
 
 
 def sas_login():
-    user = getpass.getuser()
-    password = getpass.getpass()
+    user = input(f'Usuario con el que conectarse a SAS [{settings.ADMIN_USER}]:').strip()
+    user = user or settings.ADMIN_USER
+    password = _read_dot_password()
+    if not password:
+        password = getpass.getpass()
     execute(
-        SAS_CLI,
+        settings.SAS_CLI,
         "auth",
         "login",
         "--user",
@@ -66,13 +75,13 @@ def sas_login():
 
 
 def sas_update_user(username: str, uid: int, gid: int):
-    if is_tron():
+    if TRON:
         print(
             f"Actualizando el perfil de usuario {username} en SAS"
             f" para asignarle uid={uid} y gid={gid}"
             )
     execute(
-        SAS_CLI,
+        settings.SAS_CLI,
         "--output",
         "json",
         "identities",
@@ -87,13 +96,13 @@ def sas_update_user(username: str, uid: int, gid: int):
 
 
 def sas_update_group(group: str, gid: int):
-    if is_tron():
+    if TRON:
         print(
             f"Actualizando el grupo {group} en SAS"
             f" para vinclularlo con el grupo local {gid}"
             )
     execute(
-        SAS_CLI,
+        settings.SAS_CLI,
         "--output",
         "json",
         "identities",
@@ -106,8 +115,17 @@ def sas_update_group(group: str, gid: int):
 
 
 def sas_init():
+    os.environ['SSL_CERT_FILE'] = settings.SSL_CERT_FILE
     if sas_needs_profile():
         sas_init_profile()
     if sas_needs_credentials_update():
         sas_login()
+
+
+def _read_dot_password():
+    f = Path('./.password')
+    if f.exists():
+        with open(f, 'r') as s:
+            return s.read().strip()
+    return None
 

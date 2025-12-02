@@ -6,11 +6,17 @@ import settings
 import locallib
 import saslib
 
+OK = '\033[0;32m[Ok]\033[0m'
+
+def bold(text: str) -> str:
+    return f'\033[1m{text}\033[0m'
+
+
 
 def get_options() -> {}:
     parser = argparse.ArgumentParser(prog="alta-usuario-sas-viya")
-    parser.add_argument('username', help="El login del usuario a incoporar")
     parser.add_argument('group', help='El nombre del grupo al que pertence')
+    parser.add_argument('username', help="El login del usuario a incoporar")
     parser.add_argument('-v', '--verbose', action='store_true')
     opts = parser.parse_args()
     print(opts)
@@ -23,10 +29,6 @@ def get_options() -> {}:
             ' no existe.'
             )
     uid = locallib.get_uid(opts.username)
-    if uid:
-        raise ValueError(
-            f'El usuario indicado: [{opts.username}] ya existe.'
-            )
     return {
         'username': opts.username,
         'uid': uid,
@@ -40,20 +42,28 @@ def main():
     opt = get_options()
     username = opt['username']
     group = opt['group']
-    if settings.is_tron():
-        print(
-             f'dando de alta al usuario {username}'
-             f' en el grupo {group}'
-             )
     uid = opt['uid']
     gid = opt['gid']
-    last_uid = locallib.get_last_user_id()
-    next_uid = last_uid + 1
-    if settings.is_tron():
-        print(f"Ultimo id es {last_uid}, el siguiente es {next_uid}")
-    locallib.create_local_user(username, next_uid, gid)
+    if uid:
+        if settings.is_tron():
+            print(f'El usuario {bold(username)} ya existe localmente con uid {uid}.', OK)
+    else: 
+        if settings.is_tron():
+            print(f'El usuario {bold(username)} no existe localmente, lo crearemos.')
+            print(
+                f'Dando de alta al usuario {username} (uid por determinar)'
+                f' en el grupo {group} (gid: {gid})'
+                )
+        last_uid = locallib.get_last_user_id()
+        uid = last_uid + 1
+        if settings.is_tron():
+            print(f"Ultimo id es {last_uid}, el siguiente es {uid}")
+            print("Creando el usuario local")
+        locallib.create_local_user(username, uid, gid)
+        if settings.is_tron():
+            print(OK)
     saslib.sas_init()
-    saslib.sas_update_user(username, next_uid, gid)
+    saslib.sas_update_user(username, uid, gid)
     if settings.is_tron():
         print(
             f"Creado el usuario {username} con uid: {uid}"
